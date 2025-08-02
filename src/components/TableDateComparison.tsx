@@ -6,10 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle } from "lucide-react";
 import { type FormatConfiguration } from "./MultipleFormatsManager";
+import { stringifyOptions } from "@/lib/intl";
 
 interface TableDateComparisonProps {
   date: Date;
@@ -67,27 +67,6 @@ export function TableDateComparison({
     );
   };
 
-
-  const getOptionsPreview = (formatId: string): string => {
-    const format = formats.find((f) => f.id === formatId);
-    if (!format) return "";
-
-    const options = format.options;
-    const parts = [];
-    if (options.dateStyle) parts.push(`dateStyle: ${options.dateStyle}`);
-    if (options.timeStyle) parts.push(`timeStyle: ${options.timeStyle}`);
-    if (options.weekday) parts.push(`weekday: ${options.weekday}`);
-    if (options.year) parts.push(`year: ${options.year}`);
-    if (options.month) parts.push(`month: ${options.month}`);
-    if (options.day) parts.push(`day: ${options.day}`);
-    if (options.hour) parts.push(`hour: ${options.hour}`);
-    if (options.minute) parts.push(`minute: ${options.minute}`);
-    if (options.second) parts.push(`second: ${options.second}`);
-    if (options.timeZone) parts.push(`timeZone: ${options.timeZone}`);
-
-    return parts.join(", ");
-  };
-
   const errorCount = allResults.filter((r) => r.error).length;
   const totalCombinations = locales.length * formats.length;
 
@@ -125,38 +104,37 @@ export function TableDateComparison({
       {/* Main Comparison Table */}
       <div className="rounded-lg border shadow-sm">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="rounded-lg overflow-hidden">
             <TableHeader>
-              <TableRow className="bg-muted">
-                <TableHead className="font-semibold text-base sticky left-0 bg-muted px-4 rounded-tl-lg relative z-10">
+              <TableRow>
+                <TableHead className="font-semibold sticky left-0 bg-muted text-left px-4">
                   Locale
                 </TableHead>
                 {formats.map((format) => (
                   <TableHead
                     key={format.id}
-                    className="font-semibold text-base min-w-[250px]"
+                    className="font-semibold bg-muted text-base"
                   >
                     <div className="space-y-2 py-2">
                       <div className="text-base">{format.name}</div>
                       <div className="text-xs font-normal text-muted-foreground leading-relaxed">
-                        {getOptionsPreview(format.id)}
+                        {stringifyOptions(format.options)}
                       </div>
                     </div>
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              {locales.map((locale, index) => (
-                <TableRow key={locale} className="hover:bg-muted/30">
-                  <TableCell className={`font-medium sticky left-0 bg-background text-left px-4 ${index === locales.length - 1 ? 'rounded-bl-lg' : ''}`}>
-                    <div className="space-y-2">
-                      <div className="font-semibold">{locale}</div>
-                      <Badge variant="outline" className="text-xs">
-                        {locale.split("-")[0].toUpperCase()}
-                      </Badge>
-                    </div>
+              {locales.map((locale) => (
+                <TableRow key={locale}>
+                  <TableCell
+                    className={`font-medium sticky left-0 bg-background text-left px-4`}
+                  >
+                    <div className="font-semibold">{locale}</div>
                   </TableCell>
+
                   {formats.map((format) => {
                     const result = getResultForLocaleAndFormat(
                       locale,
@@ -190,33 +168,6 @@ export function TableDateComparison({
           </Table>
         </div>
       </div>
-
-      {/* Format Details (Collapsible) */}
-      <details className="group">
-        <summary className="cursor-pointer text-lg font-semibold flex items-center gap-2 p-4 bg-muted/30 rounded-lg transition-colors">
-          <span>Format Configuration Details</span>
-          <span className="text-muted-foreground group-open:rotate-90 transition-transform">
-            ▶
-          </span>
-        </summary>
-        <div className="mt-4 space-y-4">
-          {formats.map((format) => (
-            <Card key={format.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{format.id}</Badge>
-                  <span className="font-medium">{format.name}</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <pre className="text-sm bg-muted p-4 rounded overflow-x-auto">
-                  {JSON.stringify(format.options, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </details>
     </div>
   );
 }
