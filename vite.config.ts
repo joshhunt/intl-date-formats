@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from "node:url";
 
 // https://vite.dev/config/
 export default defineConfig({
+  cacheDir: "node_modules/.vite",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
