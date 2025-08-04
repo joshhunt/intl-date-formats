@@ -27,10 +27,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build project
+        env:
+          VITE_BASE_URL: /intl-date-formats
         run: pnpm run build
-
-      - name: Remove symlinks from dist
-        run: find ./dist -type l -exec rm {} \;
 
       - name: Upload production-ready build files
         uses: actions/upload-pages-artifact@v3
