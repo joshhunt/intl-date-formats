@@ -1,40 +1,49 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, X, Table, Settings } from "lucide-react";
 import { LocaleSelector } from "@/components/LocaleSelector";
-import { MultipleFormatsManager, type FormatConfiguration } from "@/components/MultipleFormatsManager";
+import {
+  MultipleFormatsManager,
+  type FormatConfiguration,
+} from "@/components/MultipleFormatsManager";
 import { TableDateComparison } from "@/components/TableDateComparison";
 import { DatePickerInput } from "@/components/DatePickerInput";
+import allLocalesList from "./locale-unions.json";
 import "./App.css";
 
 function App() {
   const [date, setDate] = useState(new Date());
-  const [locales, setLocales] = useState<string[]>(["en-US", "es-ES", "fr-FR", "ja-JP"]);
+  const [locales, setLocales] = useState<string[]>([
+    "en-US",
+    "es-ES",
+    "fr-FR",
+    "ja-JP",
+  ]);
   const [formats, setFormats] = useState<FormatConfiguration[]>([
     {
       id: "format-1",
       name: "Standard Date & Time",
-      options: { dateStyle: "medium", timeStyle: "short" }
+      options: { dateStyle: "medium", timeStyle: "short" },
     },
     {
-      id: "format-2", 
+      id: "format-2",
       name: "Full Date Only",
-      options: { dateStyle: "full" }
+      options: { dateStyle: "full" },
     },
     {
       id: "format-3",
       name: "Custom Format",
-      options: { 
-        weekday: "long", 
-        year: "numeric", 
-        month: "long", 
+      options: {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
         day: "numeric",
         hour: "2-digit",
-        minute: "2-digit"
-      }
-    }
+        minute: "2-digit",
+      },
+    },
   ]);
 
   const addLocale = () => {
@@ -53,6 +62,10 @@ function App() {
     setLocales(newLocales);
   };
 
+  const supportedLocales = useMemo(() => {
+    return allLocalesList.filter(localeIsSupported);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4 max-w-full">
@@ -63,7 +76,8 @@ function App() {
           </h1>
           <p className="text-lg text-muted-foreground flex items-center justify-center gap-2">
             <Table className="w-5 h-5" />
-            Compare multiple format configurations across different locales in a table view
+            Compare multiple format configurations across different locales in a
+            table view
           </p>
         </div>
 
@@ -130,10 +144,10 @@ function App() {
             <Table className="w-6 h-6" />
             <h2 className="text-2xl font-semibold">Comparison Results</h2>
           </div>
-          <TableDateComparison 
-            date={date} 
-            locales={locales} 
-            formats={formats} 
+          <TableDateComparison
+            date={date}
+            locales={locales}
+            formats={formats}
           />
         </div>
 
@@ -142,9 +156,9 @@ function App() {
         <div className="text-center text-sm text-muted-foreground">
           <p>
             Built with React, TypeScript, and{" "}
-            <a 
-              href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat" 
-              target="_blank" 
+            <a
+              href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat"
+              target="_blank"
               rel="noopener noreferrer"
               className="underline hover:no-underline"
             >
@@ -152,9 +166,72 @@ function App() {
             </a>
           </p>
         </div>
+
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-2">
+            Locale Support Comparison
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-[400px] border border-border">
+              <thead>
+                <tr className="bg-muted">
+                  <th className="px-2 py-1 border">Locale</th>
+                  <th className="px-2 py-1 border">Supported</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allLocalesList
+                  /// @ts-expect-error: toSorted is not yet recognized by TypeScript's type definitions for arrays
+                  .toSorted((a, b) => {
+                    const aIsSupported = supportedLocales.includes(a);
+                    const bIsSupported = supportedLocales.includes(b);
+                    if (aIsSupported && !bIsSupported) return 1;
+                    if (!aIsSupported && bIsSupported) return -1;
+                    return 0;
+                  })
+                  .map((locale: string) => (
+                    <tr key={locale}>
+                      <td className="px-2 py-1 border font-mono">{locale}</td>
+                      <td className="px-2 py-1 border text-center">
+                        {supportedLocales.includes(locale) ? (
+                          <span className="text-green-600 font-bold">✔</span>
+                        ) : (
+                          <span className="text-red-600 font-bold">✘</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 export default App;
+
+const sampleDate = new Date("2023-03-15T12:00:00Z");
+function localeIsSupported(locale: string) {
+  try {
+    const formatter = new Intl.DateTimeFormat(locale, {
+      timeStyle: "short",
+      dateStyle: "short",
+    });
+
+    const datePassed = formatter.format(sampleDate) !== undefined;
+    if (!datePassed) return false;
+
+    const languageFormatter = new Intl.DisplayNames("en-GB", {
+      type: "language",
+    });
+    const languageName = languageFormatter.of(locale);
+    const languagePassed = languageName !== undefined;
+    if (!languagePassed) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
